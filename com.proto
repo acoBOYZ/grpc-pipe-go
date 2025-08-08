@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package com;
+
+option go_package = "github.com/acoBOYZ/grpc-pipe-go/internal/gen/com";
+
+/**
+ * PipeMessage represents a generic message used in the Pipe communication system.
+ * 
+ * Each message has:
+ * - `type`: a string identifier to distinguish the kind of message.
+ * - `payload`: a binary payload (usually encoded data).
+ */
+message PipeMessage {
+  string type = 1;   // Identifier for the message type (e.g., "chat_message", "heartbeat").
+  bytes payload = 2; // Serialized binary data corresponding to the message.
+}
+
+/**
+ * PipeService provides a bidirectional streaming RPC method named `Communicate`.
+ *
+ * This enables both client and server to send and receive `PipeMessage` streams
+ * in real-time, making it suitable for custom protocol implementations, messaging,
+ * or RPC-over-stream scenarios.
+ */
+service PipeService {
+  rpc Communicate (stream PipeMessage) returns (stream PipeMessage);
+}
