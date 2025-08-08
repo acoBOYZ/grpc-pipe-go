@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package com;
 
-option go_package = "github.com/acoBOYZ/grpc-pipe-go/internal/gen/com";
+option go_package = "github.com/acoBOYZ/grpc-pipe-go/gen";
 
 /**
  * PipeMessage represents a generic message used in the Pipe communication system.

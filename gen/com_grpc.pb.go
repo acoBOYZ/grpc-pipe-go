@@ -4,7 +4,7 @@
 // - protoc             v5.29.3
 // source: com.proto
 
-package com
+package gen
 
 import (
 	context "context"

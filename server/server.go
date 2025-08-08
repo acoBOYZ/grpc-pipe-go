@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/acoBOYZ/grpc-pipe/grpcpipe/internal/gen/com"
+	pb "github.com/acoBOYZ/grpc-pipe-go/gen"
 	"google.golang.org/grpc"
 )
 
@@ -37,12 +37,15 @@ func (s *Server) Start() error {
 		return err
 	}
 	grpcServer := grpc.NewServer()
-	pb.RegisterPipeServiceServer(grpcServer, &pipeService{s})
+	pb.RegisterPipeServiceServer(grpcServer, &pipeService{
+		parent: s,
+	})
 	log.Printf("[SERVER] Listening on %s", addr)
 	return grpcServer.Serve(lis)
 }
 
 type pipeService struct {
+	pb.UnimplementedPipeServiceServer
 	parent *Server
 }
 

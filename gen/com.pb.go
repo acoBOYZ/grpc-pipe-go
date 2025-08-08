@@ -4,7 +4,7 @@
 // 	protoc        v5.29.3
 // source: com.proto
 
-package com
+package gen
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -88,7 +88,7 @@ const file_com_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload2D\n" +
 	"\vPipeService\x125\n" +
-	"\vCommunicate\x12\x10.com.PipeMessage\x1a\x10.com.PipeMessage(\x010\x01B)Z'github.com/acoBOYZ/grpc-pipe-go/gen/comb\x06proto3"
+	"\vCommunicate\x12\x10.com.PipeMessage\x1a\x10.com.PipeMessage(\x010\x01B%Z#github.com/acoBOYZ/grpc-pipe-go/genb\x06proto3"
 
 var (
 	file_com_proto_rawDescOnce sync.Once

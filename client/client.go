@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	pb "github.com/acoBOYZ/grpc-pipe/grpcpipe/internal/gen/com"
+	pb "github.com/acoBOYZ/grpc-pipe-go/gen"
 	"google.golang.org/grpc"
 )
 
