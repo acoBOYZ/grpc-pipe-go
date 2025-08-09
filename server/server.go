@@ -6,27 +6,9 @@ import (
 	"net"
 
 	pb "github.com/acoBOYZ/grpc-pipe-go/gen"
+	"github.com/acoBOYZ/grpc-pipe-go/pipe"
 	"google.golang.org/grpc"
 )
-
-type Pipe struct {
-	post func(msgType string, payload []byte) error
-}
-
-func (p *Pipe) Post(msgType string, payload []byte) error {
-	return p.post(msgType, payload)
-}
-
-type Options struct {
-	Host         string
-	Port         int
-	OnConnection func(pipe *Pipe)
-	OnMessage    func(pipe *Pipe, msgType string, payload []byte)
-}
-
-type Server struct {
-	opts Options
-}
 
 func New(opts Options) *Server { return &Server{opts: opts} }
 
@@ -34,14 +16,22 @@ func (s *Server) Start() error {
 	addr := fmt.Sprintf("%s:%d", s.opts.Host, s.opts.Port)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
+		if s.opts.OnError != nil {
+			s.opts.OnError("listen", err)
+		}
 		return err
 	}
-	grpcServer := grpc.NewServer()
-	pb.RegisterPipeServiceServer(grpcServer, &pipeService{
-		parent: s,
-	})
+	grpcServer := grpc.NewServer(s.opts.ServerOptions...)
+	pb.RegisterPipeServiceServer(grpcServer, &pipeService{parent: s})
 	log.Printf("[SERVER] Listening on %s", addr)
-	return grpcServer.Serve(lis)
+
+	if err := grpcServer.Serve(lis); err != nil {
+		if s.opts.OnError != nil {
+			s.opts.OnError("serve", err)
+		}
+		return err
+	}
+	return nil
 }
 
 type pipeService struct {
@@ -50,22 +40,56 @@ type pipeService struct {
 }
 
 func (p *pipeService) Communicate(stream pb.PipeService_CommunicateServer) error {
-	pipe := &Pipe{
-		post: func(msgType string, payload []byte) error {
+	ctx := stream.Context()
+
+	// Build PipeHandler
+	handler := pipe.NewPipeHandler(
+		ctx,
+		p.parent.opts.Serialization,
+		p.parent.opts.Registry,
+		func(msgType string, payload []byte) error {
 			return stream.Send(&pb.PipeMessage{Type: msgType, Payload: payload})
 		},
-	}
+		pipe.PipeHandlerOptions{
+			Compression:                p.parent.opts.Compression,
+			BackpressureThresholdBytes: p.parent.opts.BackpressureThresholdBytes,
+			Heartbeat:                  p.parent.opts.Heartbeat,
+			HeartbeatInterval:          p.parent.opts.HeartbeatInterval,
+			IncomingWorkers:            p.parent.opts.IncomingWorkers,
+			IncomingQueueSize:          p.parent.opts.IncomingQueueSize,
+			MaxInFlight:                p.parent.opts.MaxInFlight,
+			WindowReleaseOn:            p.parent.opts.WindowReleaseOn,
+		},
+	)
+
 	if p.parent.opts.OnConnection != nil {
-		p.parent.opts.OnConnection(pipe)
+		p.parent.opts.OnConnection(handler)
 	}
 
+	if err := stream.Send(&pb.PipeMessage{Type: "system_ready", Payload: []byte{}}); err != nil {
+		if p.parent.opts.OnError != nil {
+			p.parent.opts.OnError("system_ready_send", err)
+		}
+		if p.parent.opts.OnDisconnect != nil {
+			p.parent.opts.OnDisconnect(handler)
+		}
+		handler.Close()
+		return err
+	}
+
+	// recv loop -> handler.HandleIncoming
 	for {
 		msg, err := stream.Recv()
 		if err != nil {
+			if p.parent.opts.OnError != nil {
+				p.parent.opts.OnError("recv", err)
+			}
+			if p.parent.opts.OnDisconnect != nil {
+				p.parent.opts.OnDisconnect(handler)
+			}
+			handler.Close()
 			return err
 		}
-		if p.parent.opts.OnMessage != nil {
-			p.parent.opts.OnMessage(pipe, msg.Type, msg.Payload)
-		}
+		handler.HandleIncoming(msg.Type, msg.Payload)
 	}
 }

@@ -4,15 +4,6 @@ package benchmark;
 
 option go_package = "github.com/acoBOYZ/grpc-pipe-go/benchmark/protobuf/gen";
 
-message PipeMessage {
-  string type = 1;
-  bytes payload = 2;
-}
-
-service PipeService {
-  rpc Communicate(stream PipeMessage) returns (stream PipeMessage);
-}
-
 message Post {
   string id = 1;
   string title = 2;

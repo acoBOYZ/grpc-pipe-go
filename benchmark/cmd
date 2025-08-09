@@ -1,0 +1,6 @@
+go run ./protobuf/server --port 50061
+go run ./protobuf/server --port 50062
+go run ./protobuf/server --port 50063
+
+go run ./protobuf/server --port 50061 --json
+go run ./protobuf/server --port 50061 --compression
