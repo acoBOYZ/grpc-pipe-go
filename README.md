@@ -5,7 +5,7 @@
 
 - ⚡ High-throughput bidirectional streaming
 - 🧩 Schema-driven (Protobuf) or schema-less (JSON)
-- 🗜️ Optional gzip/snappy compression
+- 🗜️ Optional snappy/gzip compression
 - 🫧 Built-in backpressure & in-flight windowing
 - ❤️ Automatic reconnect (client) with exponential backoff
 - 🔌 Drop-in interop with the TypeScript library
@@ -41,7 +41,7 @@ func main() {
     Port:          50061,
     Serialization: pipe.SerializationProtobuf, // or pipe.SerializationJSON
     Registry:      reg,
-    Compression:   pipe.CompressionSnappy, // false | pipe.CompressionGzip | pipe.CompressionSnappy
+    Compression:   pipe.CompressionSnappy, // false | pipe.Snappy | pipe.Gzip
     Heartbeat:     false,
 
     OnConnection: func(ph *pipe.PipeHandler) {
@@ -88,7 +88,7 @@ func main() {
     },
     Serialization: pipe.SerializationProtobuf, // or JSON
     Registry:      reg,
-    Compression:   pipe.CompressionSnappy, // false | pipe.CompressionGzip | pipe.CompressionSnappy
+    Compression:   pipe.CompressionSnappy, // false | pipe.Snappy | pipe.Gzip
     BackpressureThresholdBytes: 5 << 20,
     OnConnected: func(ph *pipe.PipeHandler) {
       log.Println("[CLIENT] connected")
@@ -127,8 +127,8 @@ func main() {
 | `Insecure`                     | `bool`                    | `false`          | Dev mode |
 | `Serialization`                | `pipe.Serialization`      | `Protobuf`       | or JSON |
 | `Registry`                     | `*pipe.SchemaRegistry`    | `nil`            | Required for Protobuf |
-| `Compression`                  | `pipe.Compression`        | `false`          | gzip or disabled |
-| `Codec`                        | `pipe.CompressionCodec`   | Gzip / Snappy    | gzip or snappy |
+| `Compression`                  | `pipe.Compression`        | `false`          | snappy or disabled |
+| `Codec`                        | `pipe.CompressionCodec`   | Snappy / Gzip    | snappy or gzip |
 | `BackpressureThresholdBytes`   | `int`                     | `5<<20`          | Throttle |
 | `Heartbeat`                    | `bool`                    | `false`          | Enable heartbeat |
 | `OnConnected`                  | `func(*pipe.PipeHandler)` | –                | Connected hook |

@@ -30,6 +30,10 @@ func GzipCompress(in []byte) ([]byte, error) {
 	if err := zw.Close(); err != nil {
 		return nil, err
 	}
+	// out := buf.Bytes()
+	// LogSize("GZIP original", in)
+	// LogSize("GZIP compressed", out)
+	// return out, nil
 	return buf.Bytes(), nil
 }
 
@@ -45,7 +49,10 @@ func GzipDecompress(in []byte) ([]byte, error) {
 // ---- SNAPPY ----
 
 func SnappyCompress(in []byte) ([]byte, error) {
-	// snappy.Encode never returns an error
+	// out := snappy.Encode(nil, in)
+	// LogSize("SNAPPY original", in)
+	// LogSize("SNAPPY compressed", out)
+	// return out, nil
 	return snappy.Encode(nil, in), nil
 }
 

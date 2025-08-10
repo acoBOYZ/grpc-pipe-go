@@ -30,12 +30,12 @@ func main() {
 	}
 
 	srv := gs.New(gs.Options{
-		Host:              "0.0.0.0",
-		Port:              *port,
-		Serialization:     serialization,
-		Registry:          reg,
-		Compression:       true,
-		Codec:             pipe.Gzip,
+		Host:          "0.0.0.0",
+		Port:          *port,
+		Serialization: serialization,
+		Registry:      reg,
+		Compression:   true,
+		// Codec:             pipe.Snappy,
 		Heartbeat:         false, // keep disabled for clean benchmark numbers
 		HeartbeatInterval: 5 * time.Second,
 		ServerOptions: []grpc.ServerOption{

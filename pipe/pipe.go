@@ -21,7 +21,7 @@ const (
 type SendFunc func(msgType string, payload []byte) error
 
 type PipeHandlerOptions struct {
-	Compression                bool // enable compression (default gzip unless Codec set)
+	Compression                bool // enable compression (default snappy unless Codec set)
 	Codec                      CompressionCodec
 	BackpressureThresholdBytes int           // queue cap; 0 => default (5MB)
 	Heartbeat                  bool          // send system_heartbeat
@@ -134,7 +134,7 @@ func NewPipeHandler(
 			if opt.Codec != "" {
 				return opt.Codec
 			}
-			return Gzip
+			return Snappy
 		}(),
 		queueLimit:     ifZero(opt.BackpressureThresholdBytes, defaultBackpressureBytes),
 		heartbeat:      opt.Heartbeat,
@@ -244,7 +244,7 @@ func (h *PipeHandler) OnAny(cb func(msgType string, data any)) {
 	h.mu.Unlock()
 }
 
-// Post: encode (protobuf/JSON), optional gzip,
+// Post: encode (protobuf/JSON), optional snappy or gzip,
 // apply application-level in-flight window (if configured),
 // and enqueue with byte backpressure.
 func (h *PipeHandler) Post(msgType string, v any) error {

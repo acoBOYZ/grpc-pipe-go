@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	defaultAddrs      = []string{"localhost:50061", "localhost:50062", "localhost:50063"} // add more if you want
+	defaultAddrs      = []string{"localhost:50061", "localhost:50062", "localhost:50063"}
 	messagesPerClient = 33333
 )
 
@@ -133,10 +133,10 @@ func main() {
 				"clientId": "client_go:123",
 			},
 
-			Serialization:              serialization,
-			Registry:                   reg,
-			Compression:                true,
-			Codec:                      pipe.Gzip,
+			Serialization: serialization,
+			Registry:      reg,
+			Compression:   true,
+			// Codec:                      pipe.Snappy,
 			BackpressureThresholdBytes: 1 << 30,
 			Heartbeat:                  false,
 
@@ -264,7 +264,7 @@ func generateBigPayload(id string) *pb.UserProfile {
 		},
 		Posts: func() []*pb.Post {
 			posts := make([]*pb.Post, 10)
-			for i := 0; i < 10; i++ {
+			for i := range 10 {
 				posts[i] = &pb.Post{
 					Id:      fmt.Sprintf("%s-%d", id, i),
 					Title:   fmt.Sprintf("Post Title %d", i),
@@ -280,7 +280,7 @@ func generateBigPayload(id string) *pb.UserProfile {
 
 func repeat(s string, n int) string {
 	var b strings.Builder
-	for i := 0; i < n; i++ {
+	for range n {
 		b.WriteString(s)
 	}
 	return b.String()
