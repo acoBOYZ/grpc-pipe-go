@@ -29,9 +29,12 @@ package main
 
 import (
   "log"
+
   pb "github.com/acoBOYZ/grpc-pipe-go/gen"
   "github.com/acoBOYZ/grpc-pipe-go/pipe"
   gs "github.com/acoBOYZ/grpc-pipe-go/server"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 func main() {
@@ -41,9 +44,22 @@ func main() {
     Port:          50061,
     Serialization: pipe.SerializationProtobuf, // or pipe.SerializationJSON
     Registry:      reg,
-    Compression:   pipe.CompressionSnappy, // false | pipe.Snappy | pipe.Gzip
+    Compression:   pipe.CompressionSnappy, // false | pipe.Snappy | pipe.Gzip (true means pipe.Snappy)
     Heartbeat:     false,
-
+    ServerOptions: []grpc.ServerOption{
+			grpc.WriteBufferSize(1 << 20),
+			grpc.ReadBufferSize(1 << 20),
+			grpc.InitialWindowSize(1 << 20),
+			grpc.InitialConnWindowSize(1 << 20),
+			grpc.KeepaliveParams(keepalive.ServerParameters{
+				Time:    10 * time.Second,
+				Timeout: 5 * time.Second,
+			}),
+			grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+				MinTime:             20 * time.Second,
+				PermitWithoutStream: true,
+			}),
+		},
     OnConnection: func(ph *pipe.PipeHandler) {
       log.Printf("[SERVER] client connected")
       ph.On("ping", func(v any) {
@@ -52,15 +68,16 @@ func main() {
         }
       })
     },
+		OnDisconnect: func(ph *pipe.PipeHandler) {
+			log.Printf("[SERVER] Client disconnected")
+		},
     OnError: func(where string, err error) {
       log.Printf("[SERVER][%s] %v", where, err)
     },
   })
 
-  log.Printf("[SERVER] Ready on :%d", 50061)
-  if err := srv.Start(); err != nil {
-    log.Fatalf("server failed: %v", err)
-  }
+	log.Printf("[SERVER] Ready.")
+	srv.Start()
 }
 ```
 
@@ -73,22 +90,40 @@ import (
   "context"
   "log"
   "time"
+
   pb "github.com/acoBOYZ/grpc-pipe-go/gen"
   gc "github.com/acoBOYZ/grpc-pipe-go/client"
   "github.com/acoBOYZ/grpc-pipe-go/pipe"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 func main() {
   reg := /* your SchemaRegistry (protobuf) or nil for JSON */
 
   client, err := gc.New("localhost:50061", gc.Options{
+    DialOptions: []grpc.DialOption{
+      grpc.WithWriteBufferSize(4 << 20),
+      grpc.WithReadBufferSize(4 << 20),
+      grpc.WithInitialWindowSize(32 << 20),     // per-stream
+      grpc.WithInitialConnWindowSize(64 << 20), // per-connection
+      grpc.WithDefaultCallOptions(
+        grpc.MaxCallRecvMsgSize(64<<20),
+        grpc.MaxCallSendMsgSize(64<<20),
+      ),
+      grpc.WithKeepaliveParams(keepalive.ClientParameters{
+        Time:                20 * time.Second,
+        Timeout:             10 * time.Second,
+        PermitWithoutStream: true,
+      }),
+    }
     Insecure: true,
     Metadata: map[string]string{
       "clientId": "client_go:123",
     },
     Serialization: pipe.SerializationProtobuf, // or JSON
     Registry:      reg,
-    Compression:   pipe.CompressionSnappy, // false | pipe.Snappy | pipe.Gzip
+    Compression:   pipe.CompressionSnappy, // false | pipe.Snappy | pipe.Gzip (true means pipe.Snappy)
     BackpressureThresholdBytes: 5 << 20,
     OnConnected: func(ph *pipe.PipeHandler) {
       log.Println("[CLIENT] connected")
@@ -105,6 +140,8 @@ func main() {
     OnError: func(where string, err error) {
       log.Printf("[CLIENT][%s] %v", where, err)
     },
+
+		// reconnection behavior
     ReconnectBaseDelay: 2 * time.Second,
     MaxReconnectDelay:  30 * time.Second,
   })
@@ -157,7 +194,7 @@ func main() {
 ✅ Go ↔ TS  
 ✅ TS ↔ TS  
 
-TS repo: https://github.com/acoBOYZ/grpc-pipe
+- TS repo: https://github.com/acoBOYZ/grpc-pipe
 
 ---
 
@@ -170,7 +207,7 @@ TS repo: https://github.com/acoBOYZ/grpc-pipe
 | 3× Go servers → 1 Go client             | 3×33,333 | 0–1      | 6.86–7.74| 28–31    | ~24.3k msg/s per server |
 | 3× Go servers → 1 TS client             | 99,999   | 21       | 2613     | 5192     | 19,186 msg/s |
 | 3× TS servers → 1 Go client             | 3×33,333 | 1        | 71.5–82.6| 101–123  | ~12.3k msg/s per server |
-| 3× TS servers → 1 TS client             | 99,999   | 23       | 2498     | 4949     | 20,108 msg/s |
+| 3× TS servers → 1 TS client             | 99,999   | 25       | 2501.44  | 4931     | 20,169 msg/s |
 
 ### JSON, no compression (TS↔TS)
 
