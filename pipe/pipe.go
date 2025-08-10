@@ -21,7 +21,8 @@ const (
 type SendFunc func(msgType string, payload []byte) error
 
 type PipeHandlerOptions struct {
-	Compression                bool          // gzip payloads
+	Compression                bool // enable compression (default gzip unless Codec set)
+	Codec                      CompressionCodec
 	BackpressureThresholdBytes int           // queue cap; 0 => default (5MB)
 	Heartbeat                  bool          // send system_heartbeat
 	HeartbeatInterval          time.Duration // default 5s
@@ -54,6 +55,7 @@ type Handler func(data any)
 type PipeHandler struct {
 	// config
 	compression    bool
+	codec          CompressionCodec
 	queueLimit     int
 	heartbeat      bool
 	heartbeatEvery time.Duration
@@ -127,7 +129,13 @@ func NewPipeHandler(
 	}
 
 	h := &PipeHandler{
-		compression:    opt.Compression,
+		compression: opt.Compression,
+		codec: func() CompressionCodec {
+			if opt.Codec != "" {
+				return opt.Codec
+			}
+			return Gzip
+		}(),
 		queueLimit:     ifZero(opt.BackpressureThresholdBytes, defaultBackpressureBytes),
 		heartbeat:      opt.Heartbeat,
 		heartbeatEvery: ifZeroDur(opt.HeartbeatInterval, 5*time.Second),
@@ -214,6 +222,14 @@ func ifZeroDur(v, d time.Duration) time.Duration {
 	return v
 }
 
+func (h *PipeHandler) compressPayload(b []byte) ([]byte, error) {
+	return CompressWith(b, h.codec)
+}
+
+func (h *PipeHandler) decompressPayload(b []byte) ([]byte, error) {
+	return DecompressWith(b, h.codec)
+}
+
 func (h *PipeHandler) Serialization() Serialization { return h.serialization }
 
 func (h *PipeHandler) On(msgType string, cb Handler) {
@@ -248,7 +264,7 @@ func (h *PipeHandler) Post(msgType string, v any) error {
 		return err
 	}
 	if h.compression {
-		if b, err = GzipCompress(b); err != nil {
+		if b, err = h.compressPayload(b); err != nil {
 			return err
 		}
 	}
@@ -362,7 +378,7 @@ func (h *PipeHandler) runIncomingWorker() {
 			raw := in.payload
 			var err error
 			if h.compression {
-				raw, err = GzipDecompress(raw)
+				raw, err = h.decompressPayload(raw)
 				if err != nil {
 					atomicAdd(&h.dbg.decompErr, 1)
 					if v := getenv("PIPE_DEBUG_DECOMP"); v != "" {

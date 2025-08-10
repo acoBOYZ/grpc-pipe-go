@@ -5,7 +5,7 @@
 
 - ⚡ High-throughput bidirectional streaming
 - 🧩 Schema-driven (Protobuf) or schema-less (JSON)
-- 🗜️ Optional gzip compression
+- 🗜️ Optional gzip/snappy compression
 - 🫧 Built-in backpressure & in-flight windowing
 - ❤️ Automatic reconnect (client) with exponential backoff
 - 🔌 Drop-in interop with the TypeScript library
@@ -41,7 +41,7 @@ func main() {
     Port:          50061,
     Serialization: pipe.SerializationProtobuf, // or pipe.SerializationJSON
     Registry:      reg,
-    Compression:   false,
+    Compression:   pipe.CompressionSnappy, // false | pipe.CompressionGzip | pipe.CompressionSnappy
     Heartbeat:     false,
 
     OnConnection: func(ph *pipe.PipeHandler) {
@@ -88,6 +88,7 @@ func main() {
     },
     Serialization: pipe.SerializationProtobuf, // or JSON
     Registry:      reg,
+    Compression:   pipe.CompressionSnappy, // false | pipe.CompressionGzip | pipe.CompressionSnappy
     BackpressureThresholdBytes: 5 << 20,
     OnConnected: func(ph *pipe.PipeHandler) {
       log.Println("[CLIENT] connected")
@@ -120,34 +121,33 @@ func main() {
 
 ## Options (Client)
 
-| Field                       | Type                     | Default          | Purpose |
-|----------------------------|--------------------------|------------------|---------|
-| `DialOptions`              | `[]grpc.DialOption`      | –                | gRPC tuning |
-| `Insecure`                 | `bool`                   | `false`          | Dev mode |
-| `Serialization`            | `pipe.Serialization`     | `Protobuf`       | or JSON |
-| `Registry`                 | `*pipe.SchemaRegistry`   | `nil`            | Required for Protobuf |
-| `Compression`              | `bool`                   | `false`          | gzip |
-| `BackpressureThresholdBytes` | `int`                  | `5<<20`          | Throttle |
-| `Heartbeat`                | `bool`                   | `false`          | Enable heartbeat |
-| `OnConnected`              | `func(*pipe.PipeHandler)`| –                | Connected hook |
-| `OnDisconnected`           | `func()`                 | –                | Disconnected hook |
-| `OnError`                  | `func(string, error)`    | –                | Error hook |
-| `ReconnectBaseDelay`       | `time.Duration`          | `2s`             | Reconnect |
-| `MaxReconnectDelay`        | `time.Duration`          | `30s`            | Reconnect cap |
-| `Metadata`                 | `map[string]string`      | –                | Metadata |
-| `IncomingWorkers`          | `int`                    | auto             | Worker pool |
-| `IncomingQueueSize`        | `int`                    | `8192`           | Queue size |
-| `MaxInFlight`              | `int`                    | 0                | Window size |
-| `WindowReleaseOn`          | `[]string`               | –                | Release triggers |
-
-Same semantics in the TS version: https://github.com/acoBOYZ/grpc-pipe
+| Field                         | Type                      | Default          | Purpose |
+|--------------------------------|---------------------------|------------------|---------|
+| `DialOptions`                  | `[]grpc.DialOption`       | –                | gRPC tuning |
+| `Insecure`                     | `bool`                    | `false`          | Dev mode |
+| `Serialization`                | `pipe.Serialization`      | `Protobuf`       | or JSON |
+| `Registry`                     | `*pipe.SchemaRegistry`    | `nil`            | Required for Protobuf |
+| `Compression`                  | `pipe.Compression`        | `false`          | gzip or disabled |
+| `Codec`                        | `pipe.CompressionCodec`   | Gzip / Snappy    | gzip or snappy |
+| `BackpressureThresholdBytes`   | `int`                     | `5<<20`          | Throttle |
+| `Heartbeat`                    | `bool`                    | `false`          | Enable heartbeat |
+| `OnConnected`                  | `func(*pipe.PipeHandler)` | –                | Connected hook |
+| `OnDisconnected`               | `func()`                  | –                | Disconnected hook |
+| `OnError`                      | `func(string, error)`     | –                | Error hook |
+| `ReconnectBaseDelay`           | `time.Duration`           | `2s`             | Reconnect |
+| `MaxReconnectDelay`            | `time.Duration`           | `30s`            | Reconnect cap |
+| `Metadata`                     | `map[string]string`       | –                | Metadata |
+| `IncomingWorkers`              | `int`                     | auto             | Worker pool |
+| `IncomingQueueSize`            | `int`                     | `8192`           | Queue size |
+| `MaxInFlight`                  | `int`                     | 0                | Window size |
+| `WindowReleaseOn`              | `[]string`                | –                | Release triggers |
 
 ---
 
 ## JSON vs Protobuf
 
-- JSON mode: no schema, human-readable
-- Protobuf mode: registry-driven, compact & fast
+- **JSON mode:** no schema, human-readable
+- **Protobuf mode:** registry-driven, compact & fast
 
 ---
 
@@ -181,5 +181,5 @@ TS repo: https://github.com/acoBOYZ/grpc-pipe
 ---
 
 ## 📜 License
-MIT — do whatever you want, but keep it fast ⚡
+MIT — do whatever you want, but keep it fast ⚡  
 © ACO

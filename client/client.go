@@ -93,6 +93,7 @@ func (c *Client) connectOnce() error {
 		},
 		pipe.PipeHandlerOptions{
 			Compression:                c.opts.Compression,
+			Codec:                      c.opts.Codec,
 			BackpressureThresholdBytes: c.opts.BackpressureThresholdBytes,
 			Heartbeat:                  c.opts.Heartbeat,
 			HeartbeatInterval:          c.opts.HeartbeatInterval,

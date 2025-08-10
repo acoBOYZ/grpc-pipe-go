@@ -52,6 +52,7 @@ func (p *pipeService) Communicate(stream pb.PipeService_CommunicateServer) error
 		},
 		pipe.PipeHandlerOptions{
 			Compression:                p.parent.opts.Compression,
+			Codec:                      p.parent.opts.Codec,
 			BackpressureThresholdBytes: p.parent.opts.BackpressureThresholdBytes,
 			Heartbeat:                  p.parent.opts.Heartbeat,
 			HeartbeatInterval:          p.parent.opts.HeartbeatInterval,

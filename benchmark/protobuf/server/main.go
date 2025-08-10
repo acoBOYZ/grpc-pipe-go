@@ -34,7 +34,8 @@ func main() {
 		Port:              *port,
 		Serialization:     serialization,
 		Registry:          reg,
-		Compression:       *useCompression,
+		Compression:       true,
+		Codec:             pipe.Gzip,
 		Heartbeat:         false, // keep disabled for clean benchmark numbers
 		HeartbeatInterval: 5 * time.Second,
 		ServerOptions: []grpc.ServerOption{

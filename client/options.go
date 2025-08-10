@@ -17,6 +17,7 @@ type Options struct {
 	Serialization              pipe.Serialization
 	Registry                   *pipe.SchemaRegistry // required if protobuf
 	Compression                bool
+	Codec                      pipe.CompressionCodec
 	BackpressureThresholdBytes int
 	Heartbeat                  bool
 	HeartbeatInterval          time.Duration

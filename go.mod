@@ -3,6 +3,7 @@ module github.com/acoBOYZ/grpc-pipe-go
 go 1.24.6
 
 require (
+	github.com/golang/snappy v1.0.0
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.7
 )
