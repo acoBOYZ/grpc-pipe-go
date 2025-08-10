@@ -135,7 +135,7 @@ func main() {
 
 			Serialization: serialization,
 			Registry:      reg,
-			Compression:   true,
+			Compression:   false,
 			// Codec:                      pipe.Snappy,
 			BackpressureThresholdBytes: 1 << 30,
 			Heartbeat:                  false,

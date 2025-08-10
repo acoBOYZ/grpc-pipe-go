@@ -200,20 +200,55 @@ func main() {
 
 ## Benchmarks (100k msgs, ~9 KB JSON payload)
 
-### Protobuf, no compression
+> **Note:** All tests are **3 servers → 1 client**.  
+> **Thpt\***: When Go is the client → throughput per server. When TS is the client → combined throughput from all servers.
 
-| Topology                                | Messages | Min (ms) | Avg (ms) | Max (ms) | Throughput |
-|-----------------------------------------|---------:|---------:|---------:|---------:|-----------:|
-| 3× Go servers → 1 Go client             | 3×33,333 | 0–1      | 6.86–7.74| 28–31    | ~24.3k msg/s per server |
-| 3× Go servers → 1 TS client             | 99,999   | 21       | 2613     | 5192     | 19,186 msg/s |
-| 3× TS servers → 1 Go client             | 3×33,333 | 1        | 71.5–82.6| 101–123  | ~12.3k msg/s per server |
-| 3× TS servers → 1 TS client             | 99,999   | 25       | 2501.44  | 4931     | 20,169 msg/s |
+---
 
-### JSON, no compression (TS↔TS)
+### Protobuf (no compression)
 
-| Topology                        | Messages | Min (ms) | Avg (ms) | Max (ms) |
-|--------------------------------|---------:|---------:|---------:|---------:|
-| 3× TS servers → 1 TS client    | 99,999   | 62       | 2626     | 5117     |
+| Servers→Client | Messages   | Min   | Avg        | Max     | Thpt*    |
+|----------------|-----------:|------:|-----------:|--------:|---------:|
+| Go→Go          | 3×33,333   | 0–1   | 6.86–7.74  | 28–31   | ~24.3k/s |
+| Go→TS          | 99,999     | 21    | 2613       | 5192    | 19.2k/s  |
+| TS→Go          | 3×33,333   | 1     | 71.5–82.6  | 101–123 | ~12.3k/s |
+| TS→TS          | 99,999     | 25    | 2501       | 4931    | 20.2k/s  |
+
+---
+
+### JSON (GO↔GO)
+
+| Servers→Client | Compression | Messages   | Min   | Avg    | Max       | Thpt*    |
+|----------------|-------------|-----------:|------:|-------:|----------:|---------:|
+| Go→Go          | none        | 3×33,333   | 0–3   | 50–62  | 142–169   | ~13.8k/s |
+| Go→Go          | snappy      | 3×33,333   | 0     | 15–18  | 69–91     | ~13.3k/s |
+
+---
+
+### JSON (TS↔TS)
+
+| Servers→Client | Compression | Messages   | Min   | Avg    | Max     | Thpt*   |
+|----------------|-------------|-----------:|------:|-------:|--------:|--------:|
+| TS→TS          | none        | 99,999     | 62    | 2626   | 5117    |  —      |
+| TS→TS          | snappy      | 99,999     | 67    | 2574   | 4964    |  —      |
+
+---
+
+### JSON (TS↔GO)
+
+| Servers→Client | Compression | Messages   | Min   | Avg    | Max       | Thpt*    |
+|----------------|-------------|-----------:|------:|-------:|----------:|---------:|
+| TS→Go          | snappy      | 3×33,333   | 2     | 70     | 100–118   | ~14.4k/s |
+| TS→Go          | none        | 3×33,333   | 1     | 70     | 87        | ~13.3k/s |
+
+---
+
+### JSON (GO↔TS)
+
+| Servers→Client | Compression | Messages   | Min   | Avg    | Max     | Thpt*   |
+|----------------|-------------|-----------:|------:|-------:|--------:|--------:|
+| Go→TS          | snappy      | 99,999     | 69    | 2592   | 5133    |  —      |
+| Go→TS          | none        | 99,999     | 61    | 2370   | 4601    |  —      |
 
 ---
 

@@ -34,7 +34,7 @@ func main() {
 		Port:          *port,
 		Serialization: serialization,
 		Registry:      reg,
-		Compression:   true,
+		Compression:   false,
 		// Codec:             pipe.Snappy,
 		Heartbeat:         false, // keep disabled for clean benchmark numbers
 		HeartbeatInterval: 5 * time.Second,
